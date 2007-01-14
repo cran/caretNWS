@@ -1,37 +1,42 @@
 
-trainNWS <- function(x, y, 
-   method = "rf", 
-   ..., 
+trainNWS <- function(x, y,
+   method = "rf",
+   ...,
    metric = ifelse(is.factor(y), "Accuracy", "RMSE"),
+   sleighObj = NULL,
    trControl = trainNWSControl(),
-   tuneGrid = NULL, 
+   tuneGrid = NULL,
    tuneLength = 3)
 {
    library(nws)
-   sleighObj <- trControl$start() #mod this per Steve's suggestion
-   on.exit(try(stopSleigh(sleighObj), silent = TRUE))  
-    
+   
+   if(is.null(sleighObj))
+   {
+       sleighObj <- trControl$start()
+       on.exit(try(stopSleigh(sleighObj), silent = TRUE))
+   }
+   
    funcCall <- match.call(expand.dots = TRUE)
    
    modelType <- if(is.factor(y)) "Classification"  else "Regression"
    modelInfo <- caret:::modelLookup(method)
            
    if(modelType == "Classification")
-   {     
+   {
       if(!any(modelInfo$forClass)) stop("wrong model type for classification")
-      # we should get and save the class labels to ensure that predictions are coerced      
-      # to factors that have the same levels as the original data. This is especially 
+      # we should get and save the class labels to ensure that predictions are coerced
+      # to factors that have the same levels as the original data. This is especially
       # important with multiclass systems where one or more classes have low sample sizes
       # relative to the others
       classLevels <- levels(y)
       if(length(classLevels) > 2 & (method %in% c("gbm", "glmboost", "ada", "gamboost", "blackboost")))
          stop("This model is only implimented for two class problems")
-      if(!(metric %in% c("Accuracy", "Kappa"))) 
+      if(!(metric %in% c("Accuracy", "Kappa")))
          stop(paste("Metric", metric, "not applicable for classification models"))
    } else {
       if(!any(modelInfo$forReg)) stop("wrong model type for regression")
-      if(!(metric %in% c("RMSE", "Rsquared"))) 
-         stop(paste("Metric", metric, "not applicable for regression models"))         
+      if(!(metric %in% c("RMSE", "Rsquared")))
+         stop(paste("Metric", metric, "not applicable for regression models"))
       classLevels <- NA
    }
    
@@ -42,7 +47,7 @@ trainNWS <- function(x, y,
       tolower(trControl$method),
       oob = NULL,
       cv = createFolds(y, trControl$number, returnTrain = TRUE),
-      loocv = createFolds(y, length(y), returnTrain = TRUE),      
+      loocv = createFolds(y, length(y), returnTrain = TRUE),
       boot = createResample(y, trControl$number),
       test = createDataPartition(y, 1, trControl$p),
       lgocv = createDataPartition(y, trControl$number, trControl$p))
@@ -55,8 +60,8 @@ trainNWS <- function(x, y,
    {
       isFactor <- lapply(trainData, is.factor)
       isCharacter <- lapply(trainData, is.character)
-      if(any(isFactor)   | any(isCharacter))  
-         stop("All predictors must be numeric for this model") 
+      if(any(isFactor)   | any(isCharacter))
+         stop("All predictors must be numeric for this model")
    }
 
    # add the outcome to the data passed into the functions
@@ -68,13 +73,13 @@ trainNWS <- function(x, y,
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------#
    # For each tuning parameter combination, we will loop over them, fit models and generate predictions.
-   # We only save the predictions at this point, not the models (and in the case of method = "oob" we 
+   # We only save the predictions at this point, not the models (and in the case of method = "oob" we
    # only save the prediction summaries at this stage.
    
    
    # trainInfo will hold teh infomration about how we should loop to train the model and what types
-   # of parameters are used. If method = "oob", we need to setip a container for the resamplng 
-   # summary statistics 
+   # of parameters are used. If method = "oob", we need to setip a container for the resamplng
+   # summary statistics
    
    trainInfo <- caret:::tuneScheme(method, tuneGrid, trControl$method == "oob")
    paramCols <- paste(".", trainInfo$model$parameter, sep = "")
@@ -83,14 +88,14 @@ trainNWS <- function(x, y,
    {
       if(modelType == "Regression")
       {
-         performance <- data.frame(matrix(NA, ncol = 4, nrow = dim(trainInfo$loop)[1]))   
-         names(performance) <- c("RMSE", "Rsquared", "RMSESD", "RsquaredSD")   
+         performance <- data.frame(matrix(NA, ncol = 4, nrow = dim(trainInfo$loop)[1]))
+         names(performance) <- c("RMSE", "Rsquared", "RMSESD", "RsquaredSD")
    
       } else {
-         performance <- data.frame(matrix(NA, ncol = 4, nrow = dim(trainInfo$loop)[1]))   
+         performance <- data.frame(matrix(NA, ncol = 4, nrow = dim(trainInfo$loop)[1]))
          names(performance) <- c("Accuracy", "Kappa", "AccuracySD", "KappaSD")
       }
-   }   
+   }
 
    makeIndex <- function(n, k)
    {
@@ -100,9 +105,9 @@ trainNWS <- function(x, y,
    }
 
    workerGroups <- makeIndex(length(trControl$index), workerCount(sleighObj))
-   uniqueGroups <- sort(unique(workerGroups)) 
+   uniqueGroups <- sort(unique(workerGroups))
    if(trControl$verboseIter)
-   {   
+   {
       cat("Distribution of resamples per job:\n")
       print(table(paste("job", workerGroups)))
       cat("\n")
@@ -116,8 +121,8 @@ trainNWS <- function(x, y,
 
       if(trControl$verboseIter)
       {
-         caret:::iterPrint(trainInfo, j)            
-         flush.console() 
+         caret:::iterPrint(trainInfo, j)
+         flush.console()
       }
             
       argList <- list(
@@ -125,12 +130,12 @@ trainNWS <- function(x, y,
          method = method,
          tuneValue = trainInfo$loop[j,, drop = FALSE],
          obsLevels = classLevels)
-      argList <- append(argList, list(...))         
+      argList <- append(argList, list(...))
       
-      # add fault tolerance switch 
+      # add fault tolerance switch
       switch(
          trainInfo$scheme,
-         basic = 
+         basic =
          {
             # start NWS changes
                thisIter <- do.call(
@@ -143,10 +148,10 @@ trainNWS <- function(x, y,
                         x = argList,
                         combo = trainInfo$loop[j, trainInfo$constant, drop = FALSE]
                         )))
-            #end NWS changes	          
+            #end NWS changes
             results <- rbind(results, thisIter)
          },
-         seq = 
+         seq =
          {
             # start NWS changes
                thisIter <- do.call(
@@ -156,31 +161,31 @@ trainNWS <- function(x, y,
                      caret:::byResampleSeq,
                      list(splitList),
                      list(
-                        x = argList, 
+                        x = argList,
                         seq = trainInfo$seqParam[[j]],
                         combo = trainInfo$loop[j, trainInfo$constant, drop = FALSE]
                         )))
-            #end NWS changes	          
-            results <- rbind(results, thisIter)                  
+            #end NWS changes
+            results <- rbind(results, thisIter)
          },
          oob =
          {
-            tmpModelFit <- do.call(createModel, argList)      
+            tmpModelFit <- do.call(createModel, argList)
             tmpPerf <- switch(
                class(tmpModelFit)[1],
                randomForest = caret:::rfStats(tmpModelFit),
                RandomForest = caret:::cforestStats(tmpModelFit),
                bagEarth =, bagFDA = caret:::bagEarthStats(tmpModelFit),
                regbagg =, classbagg = caret:::ipredStats(tmpModelFit))
-            performance[j, names(performance) %in% names(tmpPerf)] <- tmpPerf           
+            performance[j, names(performance) %in% names(tmpPerf)] <- tmpPerf
          
          
-         })     
-   }   
+         })
+   }
 
    paramNames <- substring(names(tuneGrid), 2)
    if(trControl$method != "oob")
-   {     
+   {
       perResample <- caret:::poolByResample(results, tuneGrid, foo)
       performance <- caret:::summarize(perResample, tuneGrid, foo)
       pNames <- names(performance)
@@ -190,25 +195,25 @@ trainNWS <- function(x, y,
    } else {
       tmpLoop <- trainInfo$loop
       names(tmpLoop) <- substring(names(tmpLoop), 2)
-      performance <- cbind(tmpLoop, performance)  
+      performance <- cbind(tmpLoop, performance)
    }
           
    perfCols <- names(performance)
    perfCols <- perfCols[!(perfCols %in% paramNames)]
                
    bestIter <- if(metric != "RMSE") which.max(performance[,metric])
-      else which.min(performance[,metric])     
+      else which.min(performance[,metric])
          
    bestTune <- performance[bestIter, trainInfo$model$parameter, drop = FALSE]
-    names(bestTune) <- paste(".", names(bestTune), sep = "") 
+    names(bestTune) <- paste(".", names(bestTune), sep = "")
     
    if(trControl$method != "oob")
-   {           
-      byResample <- merge(bestTune, perResample)        
-      byResample <- byResample[,!(names(perResample) %in% names(tuneGrid))]                     
+   {
+      byResample <- merge(bestTune, perResample)
+      byResample <- byResample[,!(names(perResample) %in% names(tuneGrid))]
    } else {
-      byResample <- NULL        
-   } 
+      byResample <- NULL
+   }
 
    # reorder rows of performance
    orderList <- list()
@@ -217,16 +222,16 @@ trainNWS <- function(x, y,
       orderList[[i]] <- performance[,trainInfo$model$parameter[i]]
    }
    names(orderList) <- trainInfo$model$parameter
-   performance <- performance[do.call("order", orderList),]       
+   performance <- performance[do.call("order", orderList),]
   
        
 #------------------------------------------------------------------------------------------------------------------------------------------------------#
 
    finalModel <- createModel(
-      trainData, 
-      method = method, 
-      bestTune, 
-      obsLevels = classLevels, 
+      trainData,
+      method = method,
+      bestTune,
+      obsLevels = classLevels,
       ...)
     
    # remove this and check for other places it is reference
@@ -240,20 +245,20 @@ trainNWS <- function(x, y,
    {
       finalModel$xData <- x
       finalModel$yData <- y
-   }     
+   }
    
    structure(list(
       method = method,
       modelType = modelType,
-      results = performance, 
-      call = funcCall, 
+      results = performance,
+      call = funcCall,
       dots = list(...),
       metric = metric,
       control = trControl,
       finalModel = finalModel,
       trainingData = outData,
       resample = byResample
-      ), 
+      ),
       class = "train")
 }
 

@@ -4,11 +4,11 @@
 \description{Control of printing and resampling for \code{\link{trainNWS}}}
 \usage{
 trainNWSControl(
-   method = "boot", 
-   number = ifelse(method == "cv", 10, 25), 
-   verboseIter = TRUE, 
-   returnData = TRUE, 
-   p = 0.5, 
+   method = "boot",
+   number = ifelse(method == "cv", 10, 25),
+   verboseIter = TRUE,
+   returnData = TRUE,
+   p = 0.5,
    index = NULL,
    start = startNWS)
 }
@@ -24,8 +24,9 @@ trainNWSControl(
     list element is the sample rows used for training at that
     iteration.}
   \item{start}{a function that starts a \code{\link[nws]{slighPro}}
-    object. See the \code{link{startNWS}} function in this package as an
-  example}
+    object. Note: if the \code{sleighObj} is not NULL in the \code{link{trainNWS}} call,
+    this function is ignored. See the \code{link{startNWS}} function in this package as an
+    example}
 }
 
 \value{
