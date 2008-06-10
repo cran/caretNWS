@@ -103,13 +103,14 @@ The \code{nwsStart} can be dependent on the configuration of the user's system. 
 
 \seealso{\code{\link[caret]{createGrid}}, \code{\link[caret]{createFolds}}}
 \examples{
+\dontrun{
 data(iris)
 TrainData <- iris[,1:4]
 TrainClasses <- iris[,5]
 
 knnFit <- trainNWS(TrainData, TrainClasses, "knn", tuneLength = 10,
    trControl = trainNWSControl(method = "boot"))
-
+}
 }
 
 \keyword{models}
