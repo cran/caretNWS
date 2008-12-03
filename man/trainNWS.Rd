@@ -17,8 +17,7 @@ trainNWS(x, y, method = "rf",  ...,
 \arguments{
   \item{x}{a data frame containing training data where samples are in rows and features are in columns.}
   \item{y}{a numeric or factor vector containing the outcome for each sample.}
-  \item{method}{a string specifying which classification or regression model to use. Possible values are: \code{lm}, \code{rda}, \code{lda}, \code{gbm}, \code{rf},  \code{nnet}, \code{multinom}, \code{gpls}, \code{lvq}, \code{rpart}, \code{knn}, \code{pls}, \code{pam}, \code{nb},  \code{earth}, \code{treebag},
-\code{svmpoly}, \code{svmradial}, \code{fda}, \code{bagEarth}, \code{bagFDA}, \code{glmboost}, \code{gamboost}, \code{blackboost},  \code{ada}, \code{ctree}, \code{cforest}, \code{sddaLDA}, \code{sddaQDA},  \code{LogitBoost},  \code{J48}, \code{M5Rules}, \code{slda}, \code{superpc}, \code{enet} and \code{lasso}. See the Details section below.}  
+  \item{method}{a string specifying which classification or regression model to use. Possible values are: \code{ada}, \code{bagEarth}, \code{bagFDA}, \code{blackboost}, \code{cforest}, \code{ctree}, \code{ctree2}, \code{earth}, \code{enet}, \code{fda}, \code{gamboost}, \code{gaussprPoly}, \code{gaussprRadial}, \code{gbm}, \code{glm}, \code{glmboost}, \code{gpls}, \code{J48}, \code{JRip}, \code{knn}, \code{lasso}, \code{lda}, \code{lm}, \code{lmStepAIC}, \code{LMT}, \code{logitBoost}, \code{lssvmPoly}, \code{lssvmRadial}, \code{lvq}, \code{M5Rules}, \code{mda}, \code{multinom}, \code{nb}, \code{nnet}, \code{pam}, \code{pcaNNet}, \code{pda},  \code{pda2},\code{penalized}, \code{pls}, \code{ppr}, \code{qda}, \code{rda}, \code{rf}, \code{rpart}, \code{rvmPoly}, \code{rvmRadial}, \code{sda}, \code{sddaLDA}, \code{sddaQDA}, \code{slda}, \code{sparseLDA}, \code{spls}, \code{splsda}, \code{superpc}, \code{svmPoly}, \code{svmRadial} and \code{treebag}. See the Details section below.}  
   \item{\ldots}{ arguments passed to the classification or regression routine (such as \code{\link[randomForest]{randomForest}}). Errors will occur if values
          for tuning parameters are passed here.}
   \item{metric}{a string that specifies what summary metric will be used to select the optimal model. Possible values are "RMSE" and "Rsquared" for
@@ -41,9 +40,11 @@ A variety of models are currently available. The table below enumerates the mode
 
 \tabular{lccc}{
 \bold{Model} \tab \bold{\code{method} Value} \tab \bold{Package} \tab \bold{Tuning Parameter(s)} \cr
+Generalized linear model \tab \code{glm} \tab \pkg{stats} \tab none \cr
 Recursive partitioning \tab \code{rpart} \tab \pkg{rpart} \tab \code{maxdepth} \cr  
 \tab \code{ctree} \tab \pkg{party} \tab \code{mincriterion} \cr   
-Boosted Trees \tab \code{gbm} \tab \pkg{gbm} \tab \code{interaction depth}, \cr
+\tab \code{ctree2} \tab \pkg{party} \tab \code{maxdepth} \cr 
+Boosted trees \tab \code{gbm} \tab \pkg{gbm} \tab \code{interaction depth}, \cr
 \tab \tab \tab \code{n.trees}, \code{shrinkage}  \cr
 \tab \code{blackboost} \tab \pkg{mboost} \tab \code{maxdepth}, \code{mstop}\cr
 \tab \code{ada} \tab \pkg{ada} \tab \code{maxdepth}, \code{iter}, \code{nu}\cr            
@@ -52,31 +53,39 @@ Boosted regression models \tab \code{glmboost} \tab \pkg{mboost} \tab \code{msto
 \tab \code{logitboost} \tab \pkg{caTools} \tab  \code{nIter}\cr    
 Random forests \tab  \code{rf} \tab \pkg{randomForest} \tab \code{mtry} \cr
 \tab \code{cforest} \tab \pkg{party} \tab \code{mtry} \cr   
-Bagged Trees \tab \code{treebag} \tab \pkg{ipred} \tab None \cr 
+Bagged trees \tab \code{treebag} \tab \pkg{ipred} \tab None \cr 
 Neural networks \tab  \code{nnet} \tab \pkg{nnet} \tab \code{decay}, \code{size} \cr
+Projection pursuit regression \tab \code{ppr} \tab \pkg{stats} \tab \code{nterms} \cr
 Partial least squares \tab \code{pls} \tab \pkg{pls}, \pkg{caret} \tab \code{ncomp} \cr
-Support Vector Machines (RBF)  \tab \code{svmradial} \tab \pkg{kernlab} \tab \code{sigma}, \code{C}\cr 
-Support Vector Machines (polynomial)  \tab \code{svmpoly} \tab \pkg{kernlab} \tab \code{scale}, \code{degree}, \code{C}\cr 
-Relevance Vector Machines (RBF)  \tab \code{rvmradial} \tab \pkg{kernlab} \tab \code{sigma}\cr 
-Relevance Vector Machines (polynomial)  \tab \code{rvmpoly} \tab \pkg{kernlab} \tab \code{scale}, \code{degree}\cr 
-Least Squares Support Vector Machines (RBF)  \tab \code{lssvmradial} \tab \pkg{kernlab} \tab \code{sigma}\cr 
-Gaussian Processes (RBF)  \tab \code{guassprRadial} \tab \pkg{kernlab} \tab \code{sigma}\cr 
-Gaussian Processes (polynomial)  \tab \code{guassprPoly} \tab \pkg{kernlab} \tab \code{scale}, \code{degree}\cr 
+Sparse partial least squares \tab \code{spls} \tab \pkg{spls}, \pkg{spls} \tab \code{K}, \code{eta} \cr
+Support vector machines (RBF)  \tab \code{svmradial} \tab \pkg{kernlab} \tab \code{sigma}, \code{C}\cr 
+Support vector machines (polynomial)  \tab \code{svmpoly} \tab \pkg{kernlab} \tab \code{scale}, \code{degree}, \code{C}\cr 
+Relevance vector machines (RBF)  \tab \code{rvmradial} \tab \pkg{kernlab} \tab \code{sigma}\cr 
+Relevance vector machines (polynomial)  \tab \code{rvmpoly} \tab \pkg{kernlab} \tab \code{scale}, \code{degree}\cr 
+Least squares support vector machines (RBF)  \tab \code{lssvmradial} \tab \pkg{kernlab} \tab \code{sigma}\cr 
+Gaussian processes (RBF)  \tab \code{guassprRadial} \tab \pkg{kernlab} \tab \code{sigma}\cr 
+Gaussian processes (polynomial)  \tab \code{guassprPoly} \tab \pkg{kernlab} \tab \code{scale}, \code{degree}\cr 
 Linear least squares \tab \code{lm} \tab \pkg{stats} \tab None \cr 
 Multivariate adaptive regression splines \tab \code{earth} \tab \pkg{earth} \tab \code{degree}, \code{nprune} \cr
 Bagged MARS \tab \code{bagEarth} \tab \pkg{caret},  \pkg{earth}\tab \code{degree}, \code{nprune} \cr 
-M5 Rules \tab \code{M5Rules} \tab \pkg{RWeka} \tab \code{pruned} \cr 
-Elastic Net \tab \code{enet} \tab \pkg{elasticnet} \tab \code{lambda}, \code{fraction} \cr
+M5 rules \tab \code{M5Rules} \tab \pkg{RWeka} \tab \code{pruned} \cr 
+Elastic net \tab \code{enet} \tab \pkg{elasticnet} \tab \code{lambda}, \code{fraction} \cr
 The Lasso \tab \code{enet} \tab \pkg{elasticnet} \tab \code{fraction} \cr
-Supervised Principal Components \tab \code{superpc} \tab \pkg{superpc} \tab \code{n.components}, \code{threshold} \cr 
+Penalized linear models \tab \code{penalized} \tab \pkg{penalized} \tab \code{lambda1}, \code{lambda2}\cr
+Supervised principal components \tab \code{superpc} \tab \pkg{superpc} \tab \code{n.components}, \code{threshold} \cr 
 Linear discriminant analysis \tab \code{lda} \tab \pkg{MASS} \tab  None\cr 
+Quadratic discriminant analysis \tab \code{qda} \tab \pkg{MASS} \tab  None\cr 
 Stabilised Linear discriminant analysis \tab \code{slda} \tab \pkg{ipred} \tab  None\cr 
-Stepwise Diagonal Discriminant Analysis \tab \code{sddaLDA}, \code{sddaQDA} \tab \pkg{SDDA} \tab None \cr
-Logistic/multinomial regression \tab \code{multinom} \tab \pkg{nnet} \tab \code{decay}\cr 
+Stepwise diagonal discriminant analysis \tab \code{sddaLDA}, \code{sddaQDA} \tab \pkg{SDDA} \tab None \cr
+Shrinkage discriminant analysis \tab \code{sda} \tab \pkg{sda} \tab diagonal \cr
 Regularized discriminant analysis \tab \code{rda} \tab \pkg{klaR} \tab \code{lambda}, \code{gamma} \cr
-Stabilised Linear Discriminant Analysis \tab \code{slda} \tab \pkg{ipred} \tab None\cr
+Mixture discriminant analysis \tab \code{mda} \tab \pkg{mda} \tab \code{subclasses} \cr
+Penalized discriminant analysis \tab \code{pda} \tab \pkg{mda} \tab \code{lambda}\cr
+\tab \code{pda2} \tab \pkg{mda} \tab \code{df}\cr
+Stabilised linear discriminant analysis \tab \code{slda} \tab \pkg{ipred} \tab None\cr
 Flexible discriminant analysis (MARS) \tab \code{fda} \tab \pkg{mda}, \pkg{earth} \tab \code{degree}, \code{nprune} \cr
 Bagged FDA \tab \code{bagFDA} \tab \pkg{caret},  \pkg{earth} \tab \code{degree}, \code{nprune} \cr  
+Logistic/multinomial regression \tab \code{multinom} \tab \pkg{nnet} \tab \code{decay}\cr 
 C4.5 decision trees \tab \code{J48} \tab \pkg{RWeka} \tab \code{C}\cr
 k nearest neighbors \tab \code{knn3} \tab \pkg{caret} \tab \code{k} \cr 
 Nearest shrunken centroids \tab \code{pam} \tab \pkg{pamr} \tab \code{threshold} \cr  
@@ -84,6 +93,7 @@ Naive Bayes \tab \code{nb} \tab \pkg{klaR} \tab \code{usekernel} \cr
 Generalized partial least squares\tab \code{gpls} \tab \pkg{gpls} \tab \code{K.prov} \cr
 Learned vector quantization \tab \code{lvq} \tab \pkg{class} \tab  \code{k} 
 }
+
 
 By default, the function \code{\link[caret]{createGrid}} is used to define the candidate values of the tuning parameters. The user can also specify their own. To do this, a data fame is created with columns for each tuning parameter in the model. The column names must be the same as those listed in the table above with a leading dot. For example, \code{ncomp} would have the column heading \code{.ncomp}. This data frame can then be passed to \code{\link[caret]{createGrid}}.
 
@@ -121,6 +131,8 @@ The \code{nwsStart} can be dependent on the configuration of the user's system. 
 }
 
 \author{Max Kuhn}
+
+\references{Kuhn (2008), ``Building Predictive Models in R Using the caret'' (\url{http://www.jstatsoft.org/v28/i05/})}
 
 \seealso{\code{\link[caret]{train}}, \code{\link[caret]{createGrid}}, \code{\link[caret]{createFolds}}}
 \examples{
